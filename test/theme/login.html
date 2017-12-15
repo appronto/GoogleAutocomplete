@@ -1,0 +1,48 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <title>Login</title>
+    <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1, maximum-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="stylesheet" href="lib/bootstrap/css/bootstrap.min.css?{{cachebust}}">
+    <link rel="stylesheet" href="styles/css/lib/lib.css?{{cachebust}}">
+    <link rel="stylesheet" href="styles/css/custom.css?{{cachebust}}">
+</head>
+
+<body class="loginBody">
+    <div id="content">
+        <div class="mx-page loginPage">
+            <div class="login-container">
+                <div class="sapaHolder">
+                    <div class="sapaLogin">
+                        <div class="login-container">
+                            <form id="loginForm">
+                                    
+                                    <div id="loginMessage" class="alert alert-danger login-message" style="display:none;"></div>
+
+                                    <div class="form-group">
+                                        <label id="usernameLabel" for="usernameInput" style="display:none;">User name</label>
+                                        <input id="usernameInput" class="form-control" type="text" placeholder="User name" autocorrect="off" autocapitalize="none">
+                                    </div>
+                                    <div class="form-group">
+                                        <label id="passwordLabel" for="passwordInput" style="display:none;">Password</label>
+                                        <input id="passwordInput" class="form-control" type="password" placeholder="Password" autocorrect="off" autocapitalize="none">
+                                    </div>
+                                    <button id="loginButton" type="submit" class="btn btn-primary submit">Login</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/login_i18n.js"></script>
+    <script src="js/login.js"></script>
+</body>
+
+</html>
