@@ -107,6 +107,16 @@
             <description>The microflow to execute Onchange</description>
             <returnType type="Void"></returnType>
         </property>
+        <property key="mobileSupport" type="boolean" defaultValue="false">
+            <caption>Mobile usage</caption>
+            <category>Behavior</category>
+            <description>The handling with touch devices is different compared to dekstop browsers. This feature will add the mobile support better.</description>
+        </property>
+        <property key="countryLimitation" type="string" required="false">
+            <caption>Countries limitation</caption>
+            <category>Behavior</category>
+            <description>Google will default search over the whole world, but in most cases that will be to much. Give here comma separated the required countries. For example: nl,us,uk,be</description>
+        </property>
         
         <property key="placeholder" type="string" required="false">
             <caption>Placeholder</caption>

@@ -1,5 +1,5 @@
 /*jslint white:true, nomen: true, plusplus: true */
-/*global mx, define, require, browser, devel, console, google, document, jQuery */
+/*global mx, define, require, browser, devel, console, google, document, _jQuery */
 /*mendix */
 /*
     GoogleAutocomplete
@@ -11,23 +11,7 @@
     @date      : Fri, 05 Jun 2015 17:32:37 GMT
     @copyright : 
     @license   : Apache 2 / MIT
-
-    Documentation
-    ========================
-    Describe your widget here.
-    
-    'GoogleAutocomplete/lib/jquery-1.11.2.min'
-    _jQuery
 */
-// Required module list. Remove unnecessary modules, you can always get them back from the boilerplate.
-//define([
-//    'dojo/_base/declare', 
-//    'mxui/widget/_WidgetBase', 
-//    'dijit/_TemplatedMixin',
-//    'mxui/dom', 'dojo/dom', 
-//    'dojo/query', 'dojo/dom-prop', 'dojo/dom-geometry', 'dojo/dom-class', 'dojo/dom-style', 'dojo/dom-construct', 'dojo/_base/array', 'dojo/_base/lang', 'dojo/text', 'dojo/html', 'dojo/_base/event',
-//    'GoogleMaps/lib/jsapi','dojo/text!GoogleAutocomplete/widget/template/GoogleAutocomplete.html'
-//], function (declare, _WidgetBase, _TemplatedMixin, dom, dojoDom, domQuery, domProp, domGeom, domClass, domStyle, domConstruct, dojoArray, lang, text, html, event, _jQuery, widgetTemplate) {
 define([
     "dojo/_base/declare",
     "mxui/widget/_WidgetBase",
@@ -36,13 +20,14 @@ define([
     "dojo/dom-construct",
     "dojo/_base/array",
     "dojo/_base/lang",
+    'dojo/html',
+    "GoogleAutocomplete/lib/jquery-1.11.2",
     "dojo/text!GoogleAutocomplete/widget/template/GoogleAutocomplete.html",
     "GoogleAutocomplete/lib/jsapi"
-], function (declare, _WidgetBase, _TemplatedMixin, domStyle, domConstruct, dojoArray, lang, widgetTemplate) {
+], function (declare, _WidgetBase, _TemplatedMixin, domStyle, domConstruct, dojoArray, lang, html, _jQuery, widgetTemplate) {
     
-    'use strict';
-    
-    //var $ = jQuery.noConflict(true);
+    "use strict";
+    var $ = _jQuery.noConflict(true);
     
     // Declare widget's prototype.
     return declare('GoogleAutocomplete.widget.GoogleAutocomplete', [_WidgetBase, _TemplatedMixin], {
@@ -120,12 +105,12 @@ define([
          //start Google and create the map
         _loadGoogle: function () {
             if (google && !google.maps) {
-                var params = (this.apiAccessKey !== "") ? "key=" + this.apiAccessKey + "&libraries=places" : "libraries=places";
+                var params = (this.apiAccessKey !== "") ? "key=" + this.apiAccessKey + "&libraries=places&v=quarterly" : "libraries=places&v=quarterly";
                 
                 if (google.loader && google.loader.Secure === false) {
                     google.loader.Secure = true;
                 }
-                google.load("maps", 3, {
+                google.load("maps", 3.35, {
                     other_params: params,
                     callback: lang.hitch(this, this._setupEvents)
                 });
@@ -137,6 +122,14 @@ define([
         // Attach events to HTML dom elements
         _setupEvents: function () 
         {  
+            if(this.mobileSupport) {
+                $(document).on({'DOMNodeInserted': function() {
+                        $('.pac-item, .pac-item span', this).addClass('needsclick');
+                        $(".pac-container").attr('data-tap-disabled', 'true');
+                    }
+                }, '.pac-container'); 
+            }
+            
             // Set onchange
             this.connect(this.googleAddressInput, 'onchange', lang.hitch(this, function(e) {
                 if(this.googleAddressInput.value === "")
@@ -156,7 +149,11 @@ define([
                     // Initialize the google maps function for the first time                     
                     try {                       
                         // Initiate the autocomplete function    
-                        this.autocomplete = new google.maps.places.Autocomplete(this.googleAddressInput);                                            
+                        this.autocomplete = new google.maps.places.Autocomplete(this.googleAddressInput);  
+                        if(this.countryLimitation) {
+                            this.autocomplete.setComponentRestrictions({'country': this.countryLimitation.split(",")});                            
+                        }
+
                         
                         // Set event handler when something is selected.                        
                         google.maps.event.addListener(this.autocomplete, 'place_changed',lang.hitch(this, this._inputEvent)); 
@@ -169,30 +166,26 @@ define([
         
         _inputEvent: function()
         {
+            this._ResetValues();
             // Get the place details from the autocomplete object.             
             if(this.googleAddressInput.value !== "")
             {
                 var place = this.autocomplete.getPlace();
-                // Reset all address info first
-                this._contextObj.set(this.attrLatitude, null);
-                this._contextObj.set(this.attrLongitude, null);
 
                 // Set GPS information
                 if(place.geometry !== undefined){
-                    var lat = place.geometry.location.lat();
-                    var lng = place.geometry.location.lng();
+                    var lat = place.geometry.location.lat(),
+                        lng = place.geometry.location.lng(),
+                        componentForm = {
+                          street_number: 'short_name',
+                          route: 'long_name',
+                          locality: 'long_name',
+                          postal_code: 'short_name',
+                          country: 'long_name'
+                        };
                     
                     this._contextObj.set(this.attrLatitude, lat.toPrecision(8));
                     this._contextObj.set(this.attrLongitude, lng.toPrecision(8));
-                    
-                    // Set possible address information
-                    var componentForm = {
-                      street_number: 'short_name',
-                      route: 'long_name',
-                      locality: 'long_name',
-                      postal_code: 'short_name',
-                      country: 'long_name'
-                    };
 
                     for (var i = 0; i < place.address_components.length; i++) 
                     {
@@ -223,11 +216,6 @@ define([
                         }
                     }
                 }                        
-            } else {
-                // Reset all address info first
-                this._contextObj.set(this.attrLatitude, null);
-                this._contextObj.set(this.attrLongitude, null);
-                this._contextObj.set(this.attrAddress, null);
             }
             this._UpdateData();
         },
@@ -235,8 +223,8 @@ define([
         _UpdateData: function(){
             // Function from mendix object to set an attribute.
             if(this._contextObj){
-                this._contextObj.set(this.attrAddress, this.googleAddressInput.value);
-                if (this.mfOnchange !== '') {
+                this._SetValue(this.attrAddress, this.googleAddressInput.value);
+                if (this.mfOnchange) {
                     mx.data.action({
                         params: {
                             applyto: 'selection',
@@ -251,6 +239,23 @@ define([
                 }
             }
             this._clearValidations();
+        },
+        
+        _ResetValues: function(){
+            // Reset all address info first
+            this._SetValue(this.attrLatitude, null);
+            this._SetValue(this.attrLongitude, null);
+            this._SetValue(this.attrAddress, null);
+            this._SetValue(this.attrStreet, null);
+            this._SetValue(this.attrCity, null);
+            this._SetValue(this.attrHouseNr, null);
+            this._SetValue(this.attrPostalcode, null);
+            this._SetValue(this.attrCountry, null);  
+        },
+        
+        _SetValue: function(attr, val){
+            if(!attr && this._contextObj)
+                this._contextObj.set(attr, val);
         },
 
         // Rerender the interface.
