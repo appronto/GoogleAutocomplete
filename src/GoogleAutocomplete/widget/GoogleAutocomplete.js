@@ -62,6 +62,7 @@ define([
 
         // dijit._WidgetBase.postCreate is called after constructing the widget. Implement to do extra setup work.
         postCreate: function () {
+            logger.debug(this.id + ".postCreate");
             // Create global variable to store data 
             // Load google library
             this._loadGoogle();            
@@ -104,7 +105,8 @@ define([
         
          //start Google and create the map
         _loadGoogle: function () {
-            if (google && !google.maps) {
+            logger.debug(this.id + ".LoadGoogle");
+            if (google && (!google.maps || (google.maps && !google.maps.places))) {
                 var params = (this.apiAccessKey !== "") ? "key=" + this.apiAccessKey + "&libraries=places&v=quarterly" : "libraries=places&v=quarterly";
                 
                 if (google.loader && google.loader.Secure === false) {
@@ -122,6 +124,7 @@ define([
         // Attach events to HTML dom elements
         _setupEvents: function () 
         {  
+            logger.debug(this.id + "._setupEvents");
             if(this.mobileSupport) {
                 $(document).on({'DOMNodeInserted': function() {
                         $('.pac-item, .pac-item span', this).addClass('needsclick');
@@ -154,7 +157,6 @@ define([
                             this.autocomplete.setComponentRestrictions({'country': this.countryLimitation.split(",")});                            
                         }
 
-                        
                         // Set event handler when something is selected.                        
                         google.maps.event.addListener(this.autocomplete, 'place_changed',lang.hitch(this, this._inputEvent)); 
                     } catch(err) {
@@ -210,7 +212,7 @@ define([
                             
                             //console.log(val+'-'+addressType+'-'+attribute);
                             if(attribute !== '' && val !== ''){
-                                console.log('Set ' + attribute + ' - ' + val);
+                                logger.debug('Set ' + attribute + ' - ' + val);
                                 this._contextObj.set(attribute, val);
                             }                                    
                         }
