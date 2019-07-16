@@ -45,6 +45,8 @@ define([
         attrHouseNr: "",
         attrPostalcode: "",
         attrCity: "",
+        attrAdministrativeAreaLevel1: "",
+		attrAdministrativeAreaLevel2: "",
         
         // Parameters for the google widget
         placeSearch: "",
@@ -112,11 +114,11 @@ define([
                 if (google.loader && google.loader.Secure === false) {
                     google.loader.Secure = true;
                 }
-                google.load("maps", 3.35, {
+                google.load("maps", 3.6, {
                     other_params: params,
                     callback: lang.hitch(this, this._setupEvents)
                 });
-            } else if (google && google.maps) {
+            } else if (google && google.maps && google.maps.places) {
                 this._setupEvents();
             }
         },
@@ -137,10 +139,7 @@ define([
             this.connect(this.googleAddressInput, 'onchange', lang.hitch(this, function(e) {
                 if(this.googleAddressInput.value === "")
                 {
-                    // Reset all address info first
-                    this._contextObj.set(this.attrLatitude, null);
-                    this._contextObj.set(this.attrLongitude, null);
-                    this._contextObj.set(this.attrAddress, null);
+                    this._ResetValues();
                     this._UpdateData();
                 }
             })); 
@@ -192,7 +191,6 @@ define([
                     for (var i = 0; i < place.address_components.length; i++) 
                     {
                         var addressType = place.address_components[i].types[0];  
-                        console.log('check ' + addressType);
                         if (componentForm[addressType]) 
                         {
                             var val = place.address_components[i][componentForm[addressType]];  
@@ -208,6 +206,10 @@ define([
                                 attribute = this.attrPostalcode;
                             } else if(addressType == 'country' && this.attrCountry !== ''){
                                 attribute = this.attrCountry;
+                            }  else if(addressType == 'administrative_area_level_1' && this.attrAdministrativeAreaLevel1 !== ''){
+                                attribute = this.attrAdministrativeAreaLevel1;
+                            } else if(addressType == 'administrative_area_level_2' && this.attrAdministrativeAreaLevel2 !== ''){
+                                attribute = this.attrAdministrativeAreaLevel2;
                             }
                             
                             //console.log(val+'-'+addressType+'-'+attribute);
@@ -225,7 +227,7 @@ define([
         _UpdateData: function(){
             // Function from mendix object to set an attribute.
             if(this._contextObj){
-                this._SetValue(this.attrAddress, this.googleAddressInput.value);
+                this._contextObj.set(this.attrAddress, this.googleAddressInput.value);
                 if (this.mfOnchange) {
                     mx.data.action({
                         params: {

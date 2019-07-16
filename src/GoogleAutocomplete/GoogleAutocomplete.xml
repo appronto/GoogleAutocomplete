@@ -100,6 +100,22 @@
                 <attributeType name="String"/>
             </attributeTypes>
         </property>
+        <property key="attrAdministrativeAreaLevel1" required="false" type="attribute">
+            <caption>Administrative area level 1</caption>
+            <category>Address</category>
+            <description>Attribute for administrative area level 1</description>
+            <attributeTypes>
+                <attributeType name="String"/>
+            </attributeTypes>
+        </property>
+		<property key="attrAdministrativeAreaLevel2" required="false" type="attribute">
+            <caption>Administrative area level 2</caption>
+            <category>Address</category>
+            <description>Attribute for administrative area level 2</description>
+            <attributeTypes>
+                <attributeType name="String"/>
+            </attributeTypes>
+        </property>
       
         <property key="mfOnchange" type="microflow" required="false" defaultValue="">
             <caption>Onchange microflow</caption>
