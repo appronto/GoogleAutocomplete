@@ -182,7 +182,9 @@ define([
                           route: 'long_name',
                           locality: 'long_name',
                           postal_code: 'short_name',
-                          country: 'long_name'
+                          country: 'short_name',
+						  administrative_area_level_1: 'long_name',
+						  administrative_area_level_2: 'long_name'
                         };
                     
                     this._contextObj.set(this.attrLatitude, lat.toPrecision(8));
