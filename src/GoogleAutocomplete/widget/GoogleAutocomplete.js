@@ -112,7 +112,7 @@ define([
                 if (google.loader && google.loader.Secure === false) {
                     google.loader.Secure = true;
                 }
-                google.load("maps", 3.35, {
+                google.load("maps", 3.42, {
                     other_params: params,
                     callback: lang.hitch(this, this._setupEvents)
                 });
@@ -157,10 +157,10 @@ define([
                             this.autocomplete.setComponentRestrictions({'country': this.countryLimitation.split(",")});                            
                         }
 
-                        // Set event handler when something is selected.                        
-                        google.maps.event.addListener(this.autocomplete, 'place_changed',lang.hitch(this, this._inputEvent)); 
+                        // Set event handler when something is selected.      autocomplete                  
+                        this.autocomplete.addListener("place_changed",lang.hitch(this, this._inputEvent)); 
                     } catch(err) {
-                        this._addValidation('Failed to build google: ' + err.message);
+                        this._addValidation("Failed to build google: " + err.message);
                     }
                 }
             });                                                
