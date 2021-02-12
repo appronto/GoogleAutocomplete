@@ -231,33 +231,8 @@ define([
                     this._checkAttribute({postal_code: "short_name"}, place.address_components, this._contextObj, this.attrPostalcode);
                     this._checkAttribute({country: this.countryName}, place.address_components, this._contextObj, this.attrCountry);
                     
-
-//                    for (var i = 0; i < place.address_components.length; i++) {
-//                        var addressType = place.address_components[i].types[0];
-//                        logger.debug(this.id + "._inputEvent check " + addressType);
-//                        if (componentForm[addressType]) {
-//                            var val = place.address_components[i][componentForm[addressType]];
-//
-//                            var attribute = '';
-//                            if (addressType == 'route' && this.attrStreet !== '') {
-//                                attribute = this.attrStreet;
-//                            } else if (addressType == 'locality' && this.attrCity !== '') {
-//                                attribute = this.attrCity;
-//                            } else if (addressType == 'street_number' && this.attrHouseNr !== '') {
-//                                attribute = this.attrHouseNr;
-//                            } else if (addressType == 'postal_code' && this.attrPostalcode !== '') {
-//                                attribute = this.attrPostalcode;
-//                            } else if (addressType == 'country' && this.attrCountry !== '') {
-//                                attribute = this.attrCountry;
-//                            }
-//
-//                            //console.log(val+'-'+addressType+'-'+attribute);
-//                            if (attribute !== '' && val !== '') {
-//                                logger.debug(this.id + "._inputEvent Set " + attribute + " - " + val);
-//                                this._contextObj.set(attribute, val);
-//                            }
-//                        }
-//                    }
+                    if(this.attrRaw)
+                        this._contextObj.set(this.attrRaw, JSON.stringify(place.address_components));
                 }
             }
             this._UpdateData();

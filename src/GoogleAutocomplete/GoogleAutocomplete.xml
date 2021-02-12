@@ -41,6 +41,14 @@
                 <attributeType name="Decimal" />
             </attributeTypes>
         </property>
+        <property key="attrRaw" required="false" type="attribute">
+            <caption>Raw data</caption>
+            <category>Data</category>
+            <description>Attribute to place the Google RAW JSON data which should be unlimited in length</description>
+            <attributeTypes>
+                <attributeType name="String" />
+            </attributeTypes>
+        </property>
 
         <property key="attrStreet" required="false" type="attribute">
             <caption>Street</caption>
@@ -56,6 +64,7 @@
             <description>Attribute for the housenumber</description>
             <attributeTypes>
                 <attributeType name="String" />
+                <attributeType name="Integer" />
             </attributeTypes>
         </property>
         <property key="attrPostalcode" required="false" type="attribute">
@@ -82,7 +91,7 @@
                 <attributeType name="String" />
             </attributeTypes>
         </property>
-
+        
         <property key="mfOnchange" type="microflow" required="false" defaultValue="">
             <caption>Onchange microflow</caption>
             <category>Behavior</category>
