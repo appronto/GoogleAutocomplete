@@ -36,8 +36,9 @@ define([
         templateString: widgetTemplate,
 
         // Parameters configured in the Modeler.
-        mfOnchange: "",
-        countryLimRetrieve: "",
+        mfOnchange: null,
+        countryLimRetrieve: null,
+        countryLimitation: null,
         attrLatitude: "",
         attrLongitude: "",
         attrAddress: "",
@@ -49,7 +50,7 @@ define([
 
         // Parameters for the google widget
         placeSearch: "",
-        autocomplete: "",
+        autocomplete: null,
 
         // Internal variables. Non-primitives created in the prototype are shared between all widget instances.
         _handles: null,
@@ -65,13 +66,14 @@ define([
         postCreate: function () {
             logger.debug(this.id + ".postCreate");
             // Create global variable to store data 
-            // Load google library
-            this._loadGoogle();
+            
             // Visual rendering according mendix
             this._updateRendering();
-        },
-
-        executeloading: function () {
+            
+            // Load google library and after loading: setup events
+            this._loadGoogle();
+            
+            // Setup interaction events
             this._setupEvents();
         },
 
@@ -80,6 +82,7 @@ define([
             this._contextObj = obj;
             this._resetSubscriptions();
             this._updateRendering();
+            this._setupParams();
 
             callback();
         },
@@ -104,19 +107,21 @@ define([
 
         //start Google and create the map
         _loadGoogle: function () {
-            logger.debug(this.id + ".LoadGoogle");
             if (google && (!google.maps || (google.maps && !google.maps.places))) {
                 var params = (this.apiAccessKey !== "") ? "key=" + this.apiAccessKey + "&libraries=places&v=quarterly" : "libraries=places&v=quarterly";
+                
+                logger.debug(this.id + ".LoadGoogle with params: " + params);
 
                 if (google.loader && google.loader.Secure === false) {
                     google.loader.Secure = true;
                 }
                 google.load("maps", 3.42, {
                     other_params: params,
-                    callback: lang.hitch(this, this._setupEvents)
+                    callback: lang.hitch(this, this._setupParams)
                 });
             } else if (google && google.maps) {
-                this._setupEvents();
+                logger.debug(this.id + ".LoadGoogle already loaded");
+                this._setupParams();
             }
         },
 
@@ -141,30 +146,45 @@ define([
                     this._contextObj.set(this.attrAddress, null);
                     this._UpdateData();
                 }
-            }));
+            }));                                        
+        },
+        
+        _setupParams: function(){
+            if (google.maps.places && this.autocomplete == null) {
+                if (this.countryLimRetrieve) {
+                    // Retrieve country from microflow
+                    logger.debug(this.id + "._setupParams Retrieve countries from " + this.countryLimRetrieve);
 
-            if (this.countryLimRetrieve) {
-                // Retrieve country from nanoflow
-                console.log("Retrieve countries from " + this.countryLimRetrieve);
-                mx.data.action({
-                    params: {
-                        applyto: 'selection',
-                        actionname: this.countryLimRetrieve,
-                        guids: [this._contextObj.getGuid()]
-                    },
-                    callback:lang.hitch(this, this._setupAutocomplete),
-                    error: lang.hitch(this, function (error) {
-                        console.log(this.id + ': An error occurred while executing microflow: ' + error.description);
-                    })
-                }, this);
-            } else {
-                this._setupAutocomplete(this.countryLimitation);
-            }                                              
+                    if(this._contextObj){
+                        try{
+                            mx.data.action({
+                                params: {
+                                    applyto: 'selection',
+                                    actionname: this.countryLimRetrieve,
+                                    guids: [this._contextObj.getGuid()]
+                                },
+                                callback:lang.hitch(this, this._setupAutocomplete),
+                                error: lang.hitch(this, function (error) {
+                                    console.log(this.id + "._setupParams: An error occurred while executing microflow: " + error.description);
+                                })
+                            }, this);
+                        } catch(error) {
+                            console.log(this.id + "._setupParams: An error occurred while executing microflow: " + error.description);
+                        }
+                    } else {
+                        logger.debug(this.id + "._setupParams skip country limitation from: " + this.countryLimRetrieve);
+                    }
+
+                } else {
+                    this._setupAutocomplete(this.countryLimitation);
+                }
+            }
         },
 
         _setupAutocomplete: function (countrylist) {
-            if (this.autocomplete === '') {
-                console.log("Instantiate google with countries " + countrylist);
+            logger.debug(this.id + "._setupAutocomplete");
+            if (this.autocomplete == null) {
+                logger.debug(this.id + "._setupAutocomplete Instantiate google with countries " + countrylist);
                 
                 // Initialize the google maps function for the first time                     
                 try {
@@ -204,36 +224,71 @@ define([
 
                     this._contextObj.set(this.attrLatitude, lat.toPrecision(8));
                     this._contextObj.set(this.attrLongitude, lng.toPrecision(8));
+                    
+                    this._checkAttribute({route: "long_name"}, place.address_components, this._contextObj, this.attrStreet);
+                    this._checkAttribute({locality: "long_name", sublocality: "long_name"}, place.address_components, this._contextObj, this.attrCity);
+                    this._checkAttribute({street_number: "short_name"}, place.address_components, this._contextObj, this.attrHouseNr);
+                    this._checkAttribute({postal_code: "short_name"}, place.address_components, this._contextObj, this.attrPostalcode);
+                    this._checkAttribute({country: this.countryName}, place.address_components, this._contextObj, this.attrCountry);
+                    
 
-                    for (var i = 0; i < place.address_components.length; i++) {
-                        var addressType = place.address_components[i].types[0];
-                        console.log('check ' + addressType);
-                        if (componentForm[addressType]) {
-                            var val = place.address_components[i][componentForm[addressType]];
-
-                            var attribute = '';
-                            if (addressType == 'route' && this.attrStreet !== '') {
-                                attribute = this.attrStreet;
-                            } else if (addressType == 'locality' && this.attrCity !== '') {
-                                attribute = this.attrCity;
-                            } else if (addressType == 'street_number' && this.attrHouseNr !== '') {
-                                attribute = this.attrHouseNr;
-                            } else if (addressType == 'postal_code' && this.attrPostalcode !== '') {
-                                attribute = this.attrPostalcode;
-                            } else if (addressType == 'country' && this.attrCountry !== '') {
-                                attribute = this.attrCountry;
-                            }
-
-                            //console.log(val+'-'+addressType+'-'+attribute);
-                            if (attribute !== '' && val !== '') {
-                                logger.debug('Set ' + attribute + ' - ' + val);
-                                this._contextObj.set(attribute, val);
-                            }
-                        }
-                    }
+//                    for (var i = 0; i < place.address_components.length; i++) {
+//                        var addressType = place.address_components[i].types[0];
+//                        logger.debug(this.id + "._inputEvent check " + addressType);
+//                        if (componentForm[addressType]) {
+//                            var val = place.address_components[i][componentForm[addressType]];
+//
+//                            var attribute = '';
+//                            if (addressType == 'route' && this.attrStreet !== '') {
+//                                attribute = this.attrStreet;
+//                            } else if (addressType == 'locality' && this.attrCity !== '') {
+//                                attribute = this.attrCity;
+//                            } else if (addressType == 'street_number' && this.attrHouseNr !== '') {
+//                                attribute = this.attrHouseNr;
+//                            } else if (addressType == 'postal_code' && this.attrPostalcode !== '') {
+//                                attribute = this.attrPostalcode;
+//                            } else if (addressType == 'country' && this.attrCountry !== '') {
+//                                attribute = this.attrCountry;
+//                            }
+//
+//                            //console.log(val+'-'+addressType+'-'+attribute);
+//                            if (attribute !== '' && val !== '') {
+//                                logger.debug(this.id + "._inputEvent Set " + attribute + " - " + val);
+//                                this._contextObj.set(attribute, val);
+//                            }
+//                        }
+//                    }
                 }
             }
             this._UpdateData();
+        },
+        
+        // key-value pairs {locality: "long_name", sublocality : "long_name"}
+        _checkAttribute: function(componentForm, data, obj, attr){
+            if(attr && componentForm){ // No attribute = nothing to store
+                // Check for each type the required value for the attribute
+                var value = null;
+                
+                for(var key in componentForm){ // Check per configurred component
+                    for (var i = 0; i < data.length; i++) { // Check data element of google
+                        for (var e = 0; e < data[i].types.length; e++) { // Check per data element per type of google
+                            var addressType = data[i].types[e];
+                            if(addressType == key){
+                                value = data[i][componentForm[key]];
+                                break;
+                            }
+                            if(value)
+                                break;
+                        }
+                    }
+                    
+                    if(value)
+                        break;
+                }
+                
+                logger.debug(this.id + "._checkAttribute Set " + attr + " - " + value);
+                obj.set(attr, value);
+            }
         },
 
         _UpdateData: function () {
